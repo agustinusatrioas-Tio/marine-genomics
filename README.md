@@ -6,9 +6,6 @@ The project focuses on assembling and interpreting metagenomic data associated w
 ## Repository contents
 
 - `Workshop_4_BBD_analysis.qmd` – main analysis document
-- `data/` – input data used for the analysis
-- `outputs/` – figures, tables, and results generated from the analysis
-- `scripts/` – additional scripts used during the workflow
 
 ## Aim
 
