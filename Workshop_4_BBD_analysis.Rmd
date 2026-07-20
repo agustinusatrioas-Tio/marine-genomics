@@ -297,4 +297,5 @@ Expected output:
 
 These bins were selected because they were more complete than the remaining bins and were more likely to contain useful information about 
 
+Step 7
 
