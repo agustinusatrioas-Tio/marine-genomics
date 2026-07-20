@@ -3,42 +3,48 @@ title: "Workshop_4_BBD_analysis"
 author: "Agustinus Satrio Supoyo"
 date: "2026-07-07"
 output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
- Step 1: Document Your Work
+Step 1: Document Your Work
 
-For this workshop, I decided to document the complete analysis in a single R Markdown file rather than creating a separate document for each analysis step.
+For this workshop, I decided to document the complete analysis in a
+single R Markdown file rather than creating a separate document for each
+analysis step.
 
 The R Markdown file used for this project is:
 
-```text
+``` text
 Workshop_4_BBD_analysis.Rmd
 ```
 
 The document title is:
 
-```text
+``` text
 Workshop 4: Black Band Disease Metagenome Analysis
 ```
 
 This file contains the complete workflow, including:
 
-- metagenome assembly using Flye;
-- genome binning using MetaBAT2;
-- bin quality assessment using CheckM;
-- functional analysis;
-- results and interpretation.
+-   metagenome assembly using Flye;
+-   genome binning using MetaBAT2;
+-   bin quality assessment using CheckM;
+-   functional analysis;
+-   results and interpretation.
 
-Using one R Markdown document keeps the complete workflow in one place and makes it easier to follow the analysis from beginning to end.
+Using one R Markdown document keeps the complete workflow in one place
+and makes it easier to follow the analysis from beginning to end.
 
-Step 2
-# Step 2: Assembly with Flye
+Step 2 \# Step 2: Assembly with Flye
 
-The purpose of this step was to assemble Oxford Nanopore reads from the black band disease microbial community into contigs.
+The purpose of this step was to assemble Oxford Nanopore reads from the
+black band disease microbial community into contigs.
 
 ## Create the Flye Directory
 
@@ -56,9 +62,10 @@ ln -s /pvol/data/metagenome_assembly/bbd_0.1.fastq.gz .
 
 ## Create the SLURM Script
 
-A shell script called `run_flye_bbd.sh` was created inside the `flye` directory.
+A shell script called `run_flye_bbd.sh` was created inside the `flye`
+directory.
 
-```bash
+``` bash
 #!/bin/bash
 #SBATCH --time=720
 #SBATCH --ntasks=12 --mem=10gb
@@ -72,38 +79,37 @@ echo "Finished flye bbd in $(pwd) at $(date)"
 
 ## Submit the Job
 
-```bash
+``` bash
 sbatch run_flye_bbd.sh
 ```
 
 ## Monitor the Job
 
-```bash
+``` bash
 squeue -u $USER
 ```
 
 Job status:
 
-```text
+``` text
 PD = Pending
 R  = Running
 ```
 
 The SLURM output file can be checked using:
 
-```bash
+``` bash
 tail -f slurm-XXX.out
 ```
-My slurm number was 591
-## GitHub Files
+
+My slurm number was 591 \## GitHub Files
 
 Only the R Markdown file and shell script should be added to GitHub.
 
-git add Workshop_4_BBD_analysis.Rmd
-git add flye/run_flye_bbd.sh
-git commit -m "Add Flye assembly workflow"
-git push
-```
+git add Workshop_4_BBD_analysis.Rmd git add flye/run_flye_bbd.sh git
+commit -m "Add Flye assembly workflow" git push
+
+```         
 
 Large sequencing and Flye output files should not be uploaded to GitHub.
 
@@ -123,19 +129,20 @@ cd metabat
 
 Depth information was extracted from the Flye assembly output:
 
-```bash
+``` bash
 cat ../flye/bbd/assembly_info.txt  | grep -v '#' | awk '{OFS="\t";print $1,$3}' > depths_bbd.txt
 ```
 
 The output file can be checked using:
 
-```bash 
+``` bash
 head depths_bbd.txt
 ```
 
 ## Reorder the Contigs
 
-The contigs were reordered so that the FASTA file matched the order of the depth file:
+The contigs were reordered so that the FASTA file matched the order of
+the depth file:
 
 ```{bash, eval=FALSE}
 cat depths_bbd.txt | awk '{print $1}' | xargs samtools faidx ../flye/bbd/assembly.fasta > assembly_bbd_ordered.fasta
@@ -149,7 +156,7 @@ ls -lh assembly_bbd_ordered.fasta
 
 ## Run MetaBAT2
 
-```bash
+``` bash
 metabat2 -i assembly_bbd_ordered.fasta -a depths_bbd.txt --cvExt -o bins_bbd/metabat --seed 5
 ```
 
@@ -159,7 +166,7 @@ CheckM was used to assess the quality of the bins produced by MetaBAT2.
 
 ## Create the CheckM Directory
 
-```bash
+``` bash
 cd ~/marine-genomics
 mkdir checkm
 cd checkm
@@ -167,34 +174,33 @@ cd checkm
 
 ## Find the Largest Contig
 
-```bash
+``` bash
 cat ../flye/bbd/assembly.fasta | bioawk -c fastx '{print length($seq),$name}' | sort -n
 ```
 
 The largest contig was:
 
-```text
+``` text
 4706700 contig_133
-
 ```
 
 ## Prepare the Bins
 
-```
+```         
 mkdir bins_bbd
 cp ../metabat/bins_bbd/*.fa bins_bbd/
 ```
 
 The largest contig was added manually:
 
-```
+```         
 samtools faidx ../flye/bbd/assembly.fasta contig_133 \
   > bins_bbd/contig_133.fa
 ```
 
 A script called `run_checkm_bbd.sh` was created:
 
-```
+```         
 #!/bin/bash
 #SBATCH --time=60
 #SBATCH --ntasks=6
@@ -215,13 +221,14 @@ echo "Finished checkm in $(pwd) at $(date)"
 
 ## Submit the Job
 
-```
+```         
 sbatch run_checkm_bbd.sh
 ```
 
 # Step 5: Select Bins Based on CheckM Results
 
-The CheckM results were used to select the most complete genome bins for further functional analysis.
+The CheckM results were used to select the most complete genome bins for
+further functional analysis.
 
 ## View the CheckM Results
 
@@ -268,7 +275,7 @@ cat bbd_topbins.txt
 
 A total of 12 bins had completeness greater than 15%:
 
-```text
+``` text
 contig_133
 metabat.28
 metabat.33
@@ -291,11 +298,291 @@ wc -l bbd_topbins.txt
 
 Expected output:
 
-```text
+``` text
 12 bbd_topbins.txt
 ```
 
-These bins were selected because they were more complete than the remaining bins and were more likely to contain useful information about 
+These bins were selected because they were more complete than the
+remaining bins and were more likely to contain useful information about
 
-Step 7
+# Step 7: Gene Annotation with Prokka
 
+Prokka was used to identify genes and assign possible functions to genes
+within the selected genome bins.
+
+## Create the Prokka Directory
+
+```{bash, eval=FALSE}
+cd ~/marine-genomics
+mkdir prokka
+cd prokka
+```
+
+## Test Prokka on One Bin
+
+The first bin in the selected-bin list was checked using:
+
+```{bash, eval=FALSE}
+head -n 1 ../checkm/bbd_topbins.txt
+```
+
+The first bin was:
+
+``` text
+contig_133
+```
+
+Prokka was tested on this bin:
+
+```{bash, eval=FALSE}
+bin=metabat.5
+prokka --outdir $bin --prefix $bin  ../metabat/bins_bbd/${bin}.fa
+```
+
+The output files were checked using:
+
+```{bash, eval=FALSE}
+ls metabat.5
+```
+
+## Run Prokka on All Selected Bins
+
+A SLURM script called `run_prokka.sh` was created inside the `prokka`
+directory.
+
+```{bash, eval=FALSE}
+#!/bin/bash
+#SBATCH --time=60
+#SBATCH --ntasks=2 --mem=2gb
+
+echo "Starting prokka in $(pwd) at $(date)"
+
+shopt -s expand_aliases
+alias prokka='apptainer run -B /pvol/:/pvol /pvol/data/sif/prokka.sif prokka'
+
+while read bin;do 
+  prokka --outdir $bin --prefix $bin "../metabat/bins_bbd/${bin}.fa";
+done < ../checkm/bbd_topbins.txt
+
+echo "Finished prokka in $(pwd) at $(date)"
+```
+
+## Submit the Prokka Job
+
+```{bash, eval=FALSE}
+sbatch run_prokka.sh
+```
+
+Step 8
+
+# Step 8: Infer Metabolic Pathways with MinPath
+
+MinPath was used to infer metabolic pathways from the genes annotated by
+Prokka.
+
+The aim was to identify possible biological functions within the black
+band disease microbial community, including processes such as
+photosynthesis and sulfate reduction.
+
+## Create the MinPath Directory
+
+```{bash, eval=FALSE}
+cd ~/marine-genomics
+mkdir minpath
+cd minpath
+```
+
+## Inspect a Prokka Annotation File
+
+The Prokka `.tsv` file for one bin was viewed using:
+
+```{bash, eval=FALSE}
+head ../prokka/metabat.5/metabat.5.tsv
+```
+
+The Prokka output contained gene IDs, gene lengths, predicted gene
+names, EC numbers, COG identifiers, and protein functions. Most of the
+first genes were annotated as hypothetical proteins, meaning their
+functions could not be confidently identified. One gene, `bcrA`, was
+identified as a bacitracin transport ATP-binding protein.
+
+## Prepare MinPath Input
+
+MinPath requires the gene ID and EC number.
+
+```{bash, eval=FALSE}
+head ../prokka/metabat.5/metabat.5.tsv | awk -F '\t' '{print $1,$5}'
+```
+
+The option `-F '\t'` tells `awk` that the file is tab-separated.
+
+Next, only genes with an EC number were selected:
+
+```{bash, eval=FALSE}
+head ../prokka/metabat.5/metabat.5.tsv | awk -F '\t' '$5{print $1,$5}'
+```
+
+The output was then formatted as tab-separated data and the header was
+removed:
+
+```{bash, eval=FALSE}
+head ../prokka/metabat.5/metabat.5.tsv | awk -F '\t' '$5{OFS="\t";print $1,$5}' | grep -v '^locus'
+```
+
+Because `head` only processes the first 10 lines, `cat` was used to
+process the complete file:
+
+```{bash, eval=FALSE}
+cat ../prokka/metabat.5/metabat.5.tsv | awk -F '\t' '$5{OFS="\t";print $1,$5}' | grep -v '^locus'
+```
+
+The final MinPath input was saved as:
+
+```{bash, eval=FALSE}
+cat ../prokka/metabat.5/metabat.5.tsv | awk -F '\t' '$5{OFS="\t";print $1,$5}' | grep -v '^locus' > metabat.5.ec
+```
+
+The file can be checked using:
+
+```{bash, eval=FALSE}
+head metabat.5.ec
+```
+
+## Run MinPath
+
+MinPath was run using:
+
+```{bash, eval=FALSE}
+minpath -ec metabat.5.ec -report metabat.5.ec.report -details metabat.5.ec.details
+```
+
+The first lines of the pathway report were viewed using:
+
+```{bash, eval=FALSE}
+head metabat.5.ec.report
+```
+
+An example line from the MinPath report is:
+
+``` text
+path PWY-7321 any n/a naive 1 minpath 0 fam0 4 fam-found 2 name ecdysteroid metabolism (arthropods)
+```
+
+The important parts are:
+
+-   `PWY-7321` is the pathway identifier in the MetaCyc database.
+-   `fam0 4` means that the pathway contains four gene families.
+-   `fam-found 2` means that two of those gene families were detected in
+    this genome bin.
+-   `name ecdysteroid metabolism (arthropods)` is the pathway name.
+
+This means that only part of the pathway was detected. Therefore, the
+pathway may be present, but the evidence is incomplete and should be
+interpreted carefully.
+
+## Run MinPath for All Selected Bins
+
+After Prokka finished, MinPath input files were prepared for all
+selected bins.
+
+```{bash, eval=FALSE}
+while read bin;do 
+  cat ../prokka/$bin/${bin}.tsv | awk -F '\t' '$5{printf("%s\t%s\n", $1,$5)}' | grep -v '^locus' > ${bin}.ec 
+done < ../checkm/bbd_topbins.txt
+```
+
+This created one `.ec` file for each selected bin.
+
+MinPath was then run for all bins:
+
+```{bash, eval=FALSE}
+while read bin;do 
+  minpath -ec ${bin}.ec -report ${bin}.ec.report -details ${bin}.ec.details
+done < ../checkm/bbd_topbins.txt
+```
+
+## Search for Photosynthesis Pathways
+
+The pathway `PWY-101` represents photosynthesis light reactions,
+including components of Photosystem I and Photosystem II.
+
+The pathway was searched across all MinPath reports using:
+
+```{bash, eval=FALSE}
+grep 'PWY-101' *.ec.report
+```
+
+The results were:
+
+``` text
+contig_133      minpath 0   fam0 4   fam-found 1
+metabat.28      minpath 1   fam0 4   fam-found 4
+metabat.42      minpath 1   fam0 4   fam-found 1
+metabat.58      minpath 0   fam0 4   fam-found 1
+metabat.5       minpath 1   fam0 4   fam-found 1
+```
+
+`metabat.28` provided the strongest evidence for photosynthesis because
+all four gene families associated with the pathway were detected.
+
+The other bins contained only one of the four gene families. Therefore,
+their evidence for a complete photosynthesis light-reaction pathway was
+weak.
+
+This result is consistent with the GTDB/CheckM classification of
+`metabat.28` as Cyanobacteria, which are expected to be the main
+photosynthetic members of the black band disease community.
+
+Although `metabat.42` and `metabat.5` had `minpath 1`, only one gene
+family was detected in each bin. These pathway predictions should
+therefore be interpreted cautiously.
+
+### Question 4.1
+
+How many bins contain at least one gene from this pathway? Which bin has
+all of the genes (ie a complete pathway)?
+
+Five bins contained at least one gene family from the photosynthesis
+light-reaction pathway `PWY-101`:
+
+``` text
+contig_133
+metabat.28
+metabat.42
+metabat.58
+metabat.5
+```
+
+Only `metabat.28` contained all four gene families required for the
+pathway:
+
+5 bins contained at least one gene from PWY-101, and metabat.28
+contained the complete pathway. It was classified as Cyanobacteria,
+family Desertifilaceae, genus Roseofilum.
+
+### Cross-reference `PWY-5360` with GTDB-Tk
+
+The taxonomy of `metabat.35` was checked using:
+
+```{bash, eval=FALSE}
+grep -P '^metabat\.35\t' \
+  ../gtdbtk/out/gtdbtk.bac120.summary.tsv
+```
+
+The result classified `metabat.35` as:
+
+``` text
+Phylum: Campylobacterota
+Class: Campylobacteria
+Order: Campylobacterales
+Family: Arcobacteraceae
+Genus: Halarcobacter
+```
+
+### Question 4.2
+
+How many bins contain the pathway PWY-5360? What family (in a taxonomic
+sense) do these bins belong to?
+
+One bin contained the pathway `PWY-5360`: `metabat.35`. This bin
+belonged to the family **Arcobacteraceae**.
