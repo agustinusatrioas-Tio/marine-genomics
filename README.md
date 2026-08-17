@@ -37,4 +37,11 @@ The analysis recovered several microbial genome bins associated with the BBD com
 
 ### Purpose of This Repository
 
-This repository serves as a record of my development in marine genomics and bioinformatics, particularly in using reproducible computational workflows to investigate microbial diversity, genome quality, taxonomy, and metabolic function in marine systems.
+This repository serves as a record of my development in marine genomics and bioinformatics, particularly in using reproducible computational workflows to investigate microbial diversity, genome quality, taxonomy, and metabolic function in marine systems.\
+
+## Author
+
+**Agustinus Satrio Supoyo**  
+Master of Marine Biology  
+James Cook University
+
